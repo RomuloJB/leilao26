@@ -30,7 +30,7 @@ public class Pessoa {
     private Date validadeCodigoValidacao;
     @NotBlank
     private Boolean ativo;
-    @NotBlank
-    private Lob fotoPerfil;
+    @Lob
+    private byte[] fotoPerfil;
 
 }
