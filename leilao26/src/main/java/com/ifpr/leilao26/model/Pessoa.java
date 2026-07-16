@@ -19,7 +19,7 @@ public class Pessoa {
     private Long id;
 
     @NotBlank
-    private String nome;
+    private String username;
     @NotBlank
     private String email;
     @NotBlank
