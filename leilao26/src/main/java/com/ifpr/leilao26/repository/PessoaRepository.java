@@ -7,5 +7,6 @@ import com.ifpr.leilao26.model.Pessoa;
 
 @Repository
 public interface PessoaRepository extends JpaRepository<Pessoa, Long>{
-    
+    Pessoa findByUsername(String username);
+    Pessoa findByEmail(String email);
 }
