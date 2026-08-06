@@ -29,7 +29,7 @@ public class CategoriaService {
     }
 
     public Categoria buscarPorNome(String nome){
-        return repo.findByName(nome);
+        return repo.findByNome(nome);
     }
 
     public void excluirCategoria(Long id){
