@@ -37,7 +37,7 @@ public class LeilaoController {
         return serv.atualizarLeilao(leilao);
     }
 
-    @GetMapping("/buscarTodos")
+    @GetMapping("/buscar")
     public List<Leilao> buscarTodos(){
         return serv.buscarTodos();
     }

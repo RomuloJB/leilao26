@@ -1,6 +1,7 @@
 package com.ifpr.leilao26.model;
 
 import java.sql.Date;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,6 +14,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -40,12 +42,22 @@ public class Pessoa{
     private byte[] fotoPerfil;
 
     
-    @ManyToMany
-    @JoinTable(
-        name = "pessoa_perfil",
-        joinColumns = @JoinColumn(name = "pessoa_id"),
-        inverseJoinColumns = @JoinColumn(name = "perfil_id")
-    )
-    private Set<Perfil> perfis;
+    @OneToMany(mappedBy = "pessoa")
+    private List<PessoaPerfil> perfis;
 
+    @OneToMany(mappedBy = "criado_por")
+    private List<Categoria> categorias;
+
+    @OneToMany(mappedBy = "vendedor")
+    private List<Leilao> leiloes;
+
+    @OneToMany(mappedBy = "pessoa")
+    private List<Lance> lances;
+
+    @OneToMany(mappedBy = "autor")
+    private List<Feedback> feedbacks;
+
+    @OneToMany(mappedBy = "destinatario")
+    private List<Feedback> feedbackRecebido;
+    
 }

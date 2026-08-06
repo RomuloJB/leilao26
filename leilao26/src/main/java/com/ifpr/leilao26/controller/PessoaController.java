@@ -24,7 +24,7 @@ import com.ifpr.leilao26.service.PessoaService;
 public class PessoaController {
     @Autowired private PessoaService serv;
     
-    @GetMapping("/buscarTodos")
+    @GetMapping("/buscar")
     public List<Pessoa> buscarTodos(){
         return serv.buscarTodos();
     }
