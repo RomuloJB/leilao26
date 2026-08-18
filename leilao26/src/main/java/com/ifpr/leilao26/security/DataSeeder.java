@@ -14,6 +14,10 @@ import com.ifpr.leilao26.repository.PerfilRepository;
 import com.ifpr.leilao26.repository.PessoaPerfilRepository;
 import com.ifpr.leilao26.repository.PessoaRepository;
 
+import com.ifpr.leilao26.model.Categoria;
+import com.ifpr.leilao26.repository.CategoriaRepository;
+
+
 // Roda uma vez a cada subida da aplicação.
 // Com spring.jpa.hibernate.ddl-auto=create o banco é recriado do zero a cada
 // start, então isso garante que sempre existam os 3 perfis e o admin padrão.
@@ -34,6 +38,9 @@ public class DataSeeder implements CommandLineRunner {
     @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
+    @Autowired
+    private CategoriaRepository categoriaRepository;
+
     @Value("${admin.username:admin}")
     private String adminUsername;
 
@@ -48,6 +55,9 @@ public class DataSeeder implements CommandLineRunner {
         Perfil perfilAdmin = garantirPerfil(TipoPerfil.ADMIN);
         garantirPerfil(TipoPerfil.COMPRADOR);
         garantirPerfil(TipoPerfil.VENDEDOR);
+        garantirCategoria("Gado");
+        garantirCategoria("Cavalos");
+        garantirCategoria("Ovelhas");
 
         if (pessoaRepository.findByUsername(adminUsername) == null) {
             Pessoa admin = new Pessoa();
@@ -74,4 +84,15 @@ public class DataSeeder implements CommandLineRunner {
             return perfilRepository.save(novo);
         });
     }
+
+    private Categoria garantirCategoria(String nome) {
+        Categoria existente = categoriaRepository.findByNome(nome);
+        if (existente != null) {
+            return existente;
+        }
+
+        Categoria nova = new Categoria();
+        nova.setNome(nome);
+        return categoriaRepository.save(nova);
+}
 }

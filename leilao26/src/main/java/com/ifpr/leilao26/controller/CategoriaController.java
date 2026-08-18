@@ -45,7 +45,7 @@ public class CategoriaController {
         return serv.buscarPorId(id);
     }
 
-    @GetMapping("/buscar/{nome}")
+    @GetMapping("/buscar/nome/{nome}")
     public Categoria buscarPorNome(@PathVariable() String nome){
         return serv.buscarPorNome(nome);
     }
