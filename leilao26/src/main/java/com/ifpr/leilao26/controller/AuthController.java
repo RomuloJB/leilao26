@@ -38,8 +38,6 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         try {
-            // Delega para o DaoAuthenticationProvider, que usa o
-            // CustomUserDetailsService + BCryptPasswordEncoder para validar a senha.
             authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getSenha())
             );

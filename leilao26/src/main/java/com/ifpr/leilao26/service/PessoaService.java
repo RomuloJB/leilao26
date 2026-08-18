@@ -30,12 +30,12 @@ public class PessoaService {
         return repo.findById(id).orElse(null);
     }
 
-    public Pessoa buscarPessoaPorUsuario(Pessoa username){
-        return repo.findByUsername(null);
+    public Pessoa buscarPessoaPorUsuario(String username){
+        return repo.findByUsername(username);
     }
 
-    public Pessoa buscarPessoaPorEmail(Pessoa email){
-        return repo.findByEmail(null);
+    public Pessoa buscarPessoaPorEmail(String email){
+        return repo.findByEmail(email);
     }
 
     public Pessoa criarPessoa(Pessoa pessoa) {

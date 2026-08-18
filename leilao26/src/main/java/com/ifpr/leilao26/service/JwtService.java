@@ -18,11 +18,9 @@ import io.jsonwebtoken.security.Keys;
 @Service
 public class JwtService {
 
-    // Defina em application.properties: jwt.secret=<string longa e aleatória, 32+ caracteres>
     @Value("${jwt.secret}")
     private String secret;
 
-    // Padrão: 24h em milissegundos
     @Value("${jwt.expiration-ms:86400000}")
     private long expirationMs;
 
