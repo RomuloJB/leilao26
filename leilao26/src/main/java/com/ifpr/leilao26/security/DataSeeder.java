@@ -47,7 +47,7 @@ public class DataSeeder implements CommandLineRunner {
     @Value("${admin.email:admin@farmauction.com}")
     private String adminEmail;
 
-    @Value("${admin.senha:troque-esta-senha}")
+    @Value("${admin.senha:admin}")
     private String adminSenha;
 
     @Override
