@@ -3,6 +3,7 @@ package com.ifpr.leilao26.model;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ifpr.leilao26.enums.StatusLeilao;
 
 import jakarta.persistence.Entity;
@@ -48,18 +49,23 @@ public class Leilao {
     @NotNull
     private Float lanceMinimo;
 
+    @JsonIgnore
     @ManyToOne
     private Pessoa vendedor;
 
-    @OneToOne
+    @JsonIgnore
+    @ManyToOne
     private Categoria categoria;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "leilao")
     private List<Imagem> imagens;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "leilao")
     private List<Lance> lances;
 
+    @JsonIgnore
     @ManyToOne
     private Pagamento pagamento;
 }
