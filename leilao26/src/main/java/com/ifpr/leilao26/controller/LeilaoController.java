@@ -34,6 +34,7 @@ public class LeilaoController {
 
     @PutMapping("/atualizar/{id}")
     public Leilao atualizarLeilao(@RequestBody() Leilao leilao, @PathVariable("id") Long id) {
+        leilao.setId(id);
         return serv.atualizarLeilao(leilao);
     }
 

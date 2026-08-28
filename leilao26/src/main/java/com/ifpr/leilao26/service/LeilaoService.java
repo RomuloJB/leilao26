@@ -18,8 +18,25 @@ public class LeilaoService {
         return repo.save(leilao);
     }
 
-    public Leilao atualizarLeilao(Leilao leilao) {
-        return repo.save(leilao);
+    public Leilao atualizarLeilao(Leilao leilaoAtualizado) {
+        Leilao existente = repo.findById(leilaoAtualizado.getId())
+            .orElseThrow(() -> new IllegalArgumentException("Leilão não encontrado."));
+
+        existente.setTitulo(leilaoAtualizado.getTitulo());
+        existente.setDescricao(leilaoAtualizado.getDescricao());
+        existente.setDescricaoDetalhada(leilaoAtualizado.getDescricaoDetalhada());
+        existente.setDataHoraInicio(leilaoAtualizado.getDataHoraInicio());
+        existente.setDataHoraFim(leilaoAtualizado.getDataHoraFim());
+        existente.setStatus(leilaoAtualizado.getStatus());
+        existente.setObservacao(leilaoAtualizado.getObservacao());
+        existente.setValorIncremento(leilaoAtualizado.getValorIncremento());
+        existente.setLanceMinimo(leilaoAtualizado.getLanceMinimo());
+
+        if (leilaoAtualizado.getCategoria() != null) {
+            existente.setCategoria(leilaoAtualizado.getCategoria());
+        }
+
+        return repo.save(existente);
     }
 
     public List<Leilao> buscarTodos(){
