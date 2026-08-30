@@ -76,6 +76,8 @@ public class SecurityConfig {
                 .requestMatchers("/pessoa/registrar").permitAll()
                 .requestMatchers(HttpMethod.GET, "/categoria/buscar/**").permitAll() // nova linha
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/imagem/arquivo/**").permitAll()
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())

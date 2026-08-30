@@ -1,12 +1,12 @@
 package com.ifpr.leilao26.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,10 +63,12 @@ public class AuthController {
                 .body(Map.of("message", "Usuário ou senha inválidos."));
         }
 
-        Pessoa pessoa = pessoaRepository.findByUsername(request.getUsername());
+        Pessoa pessoa = pessoaRepository.findByUsernameComPerfis(request.getUsername()).orElse(null);
         String token = jwtService.gerarToken(pessoa);
-
-        return ResponseEntity.ok(new AuthResponse(token, pessoa.getId(), pessoa.getUsername()));
+        List<String> roles = pessoa.getAuthorities().stream()
+            .map(a -> a.getAuthority().replace("ROLE_", ""))
+            .toList();
+        return ResponseEntity.ok(new AuthResponse(token, pessoa.getId(), pessoa.getUsername(), roles));
     }
 
     // Cadastro público: cria a Pessoa e já vincula o Perfil escolhido (COMPRADOR
@@ -113,8 +115,8 @@ public class AuthController {
         pessoaPerfilRepository.save(vinculo);
 
         String token = jwtService.gerarToken(pessoaSalva);
-
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(new AuthResponse(token, pessoaSalva.getId(), pessoaSalva.getUsername()));
+            .body(new AuthResponse(token, pessoaSalva.getId(), pessoaSalva.getUsername(),
+                List.of(perfil.getTipo().name())));
     }
 }

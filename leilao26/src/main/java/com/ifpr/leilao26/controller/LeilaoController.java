@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,9 +16,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.ifpr.leilao26.dto.LeilaoResponseDTO;
 import com.ifpr.leilao26.enums.StatusLeilao;
 import com.ifpr.leilao26.model.Leilao;
+import com.ifpr.leilao26.model.Pessoa;
 import com.ifpr.leilao26.service.LeilaoService;
 
 @RestController
@@ -27,25 +31,40 @@ public class LeilaoController {
     @Autowired private LeilaoService serv;
 
     @PostMapping("/registrar")
-    public ResponseEntity<Leilao> criarLeilao(@RequestBody() Leilao leilao) {
-        Leilao criarLeilao = serv.criarLeilao(leilao);
-        return ResponseEntity.status(HttpStatus.CREATED).body(criarLeilao);
+    public ResponseEntity<LeilaoResponseDTO> criarLeilao(@RequestBody Leilao leilao,
+                                                          @AuthenticationPrincipal Pessoa pessoaLogada) {
+        leilao.setVendedor(pessoaLogada);
+        Leilao criado = serv.criarLeilao(leilao);
+        return ResponseEntity.status(HttpStatus.CREATED).body(LeilaoResponseDTO.from(criado));
     }
 
     @PutMapping("/atualizar/{id}")
-    public Leilao atualizarLeilao(@RequestBody() Leilao leilao, @PathVariable("id") Long id) {
+    public LeilaoResponseDTO atualizarLeilao(@RequestBody Leilao leilao,
+                                              @PathVariable("id") Long id,
+                                              @AuthenticationPrincipal Pessoa pessoaLogada) {
+        Leilao existente = serv.buscarPorId(id);
+        if (existente == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Leilão não encontrado.");
+        }
+        verificarPermissao(existente, pessoaLogada);
+
         leilao.setId(id);
-        return serv.atualizarLeilao(leilao);
+        leilao.setVendedor(existente.getVendedor());
+        return LeilaoResponseDTO.from(serv.atualizarLeilao(leilao));
     }
 
     @GetMapping("/buscar")
-    public List<Leilao> buscarTodos(){
-        return serv.buscarTodos();
+    public List<LeilaoResponseDTO> buscarTodos(){
+        return serv.buscarTodos().stream().map(LeilaoResponseDTO::from).toList();
     }
 
     @GetMapping("/buscar/{id}")
-    public Leilao buscarPorId(@PathVariable() Long id) {
-        return serv.buscarPorId(id);
+    public LeilaoResponseDTO buscarPorId(@PathVariable() Long id) {
+        Leilao leilao = serv.buscarPorId(id);
+        if (leilao == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Leilão não encontrado.");
+        }
+        return LeilaoResponseDTO.from(leilao);
     }
     
     @GetMapping("/buscar/titulo/{titulo}")
@@ -78,9 +97,29 @@ public class LeilaoController {
         return serv.buscarPorLanceMinimo(lanceMinimo);
     }
 
+
     @DeleteMapping("/excluir/{id}")
-    public ResponseEntity<Void> excluirLeilao(@PathVariable Long id) {
+    public ResponseEntity<Void> excluirLeilao(@PathVariable Long id,
+                                               @AuthenticationPrincipal Pessoa pessoaLogada) {
+        Leilao existente = serv.buscarPorId(id);
+        if (existente == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Leilão não encontrado.");
+        }
+        verificarPermissao(existente, pessoaLogada);
+
         serv.excluirLeilao(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private void verificarPermissao(Leilao leilao, Pessoa pessoaLogada) {
+        boolean isDono = leilao.getVendedor() != null
+            && leilao.getVendedor().getId().equals(pessoaLogada.getId());
+        boolean isAdmin = pessoaLogada.getAuthorities().stream()
+            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isDono && !isAdmin) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                "Você não tem permissão para alterar este leilão.");
+        }
     }
 }

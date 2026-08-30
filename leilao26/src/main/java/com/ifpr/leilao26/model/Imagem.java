@@ -23,6 +23,8 @@ public class Imagem {
     private LocalDateTime dataHoraCadastro;
     private String nomeImagem;
 
+    private String url;
+
     private String tipoConteudo;
 
     @Lob
