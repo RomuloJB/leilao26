@@ -25,12 +25,12 @@ public class PessoaPerfilController {
     @Autowired
     private PessoaPerfilService serv;
 
-    @GetMapping("/pessoa/{pessoaId}")
+    @GetMapping("buscar/pessoa/{pessoaId}")
     public List<PessoaPerfil> buscarPorPessoa(@PathVariable Long pessoaId) {
         return serv.buscarPorPessoa(pessoaId);
     }
 
-    @GetMapping("/perfil/{perfilId}")
+    @GetMapping("buscar/perfil/{perfilId}")
     public List<PessoaPerfil> buscarPorPerfil(@PathVariable Long perfilId) {
         return serv.buscarPorPerfil(perfilId);
     }

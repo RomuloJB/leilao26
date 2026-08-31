@@ -29,7 +29,7 @@ public class PessoaController {
         return serv.buscarTodos();
     }
     
-    @GetMapping("/buscar/{id}")
+    @GetMapping("/buscar/id/{id}")
     public Pessoa buscarPessoaPorId(@PathVariable Long id) {
         return serv.buscarPessoaPorId(id);
     }

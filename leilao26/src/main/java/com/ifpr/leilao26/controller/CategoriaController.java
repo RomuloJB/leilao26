@@ -40,7 +40,7 @@ public class CategoriaController {
         return serv.buscarTodos();
     }
 
-    @GetMapping("/buscar/{id}")
+    @GetMapping("/buscar/id/{id}")
     public Categoria buscarPorId(@PathVariable() Long id){
         return serv.buscarPorId(id);
     }

@@ -31,7 +31,7 @@ public class PerfilController {
         return serv.buscarTodos();
     }
 
-    @GetMapping("/buscar/{id}")
+    @GetMapping("/buscar/id/{id}")
     public Perfil buscarPorId(@PathVariable Long id) {
         return serv.buscarPorId(id);
     }

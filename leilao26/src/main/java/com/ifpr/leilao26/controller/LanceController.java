@@ -41,17 +41,17 @@ public class LanceController {
         return serv.buscarTodos();
     }
 
-    @GetMapping("/buscar/{id}")
+    @GetMapping("/buscar/id/{id}")
     public Lance buscarPorId(@PathVariable("id") Long id){
         return serv.buscarPorId(id);
     }
 
-    @GetMapping("/buscar/{valorLance}")
+    @GetMapping("/buscar/valor-lance/{valorLance}")
     public Lance buscarPorValorLance(@PathVariable("valorLance") Float valorLance){
         return serv.buscarPorValorLance(valorLance);
     }
 
-    @GetMapping("/buscar/{dataHora}")
+    @GetMapping("/buscar/data-hora/{dataHora}")
     public Lance buscarPorDataHora(@PathVariable("dataHora") LocalDateTime dataHora){
         return serv.buscarPorDataHora(dataHora);
     }

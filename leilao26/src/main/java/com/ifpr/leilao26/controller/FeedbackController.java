@@ -40,7 +40,7 @@ public class FeedbackController {
         return serv.buscarTodos();
     }
 
-    @GetMapping("/buscar/{id}")
+    @GetMapping("/buscar/id/{id}")
     public Feedback buscarPorId(@PathVariable("id") Long id){
         return serv.buscarPorId(id);
     }

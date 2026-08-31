@@ -58,7 +58,7 @@ public class LeilaoController {
         return serv.buscarTodos().stream().map(LeilaoResponseDTO::from).toList();
     }
 
-    @GetMapping("/buscar/{id}")
+    @GetMapping("/buscar/id/{id}")
     public LeilaoResponseDTO buscarPorId(@PathVariable() Long id) {
         Leilao leilao = serv.buscarPorId(id);
         if (leilao == null) {

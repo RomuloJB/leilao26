@@ -41,17 +41,17 @@ public class PagamentoController {
         return serv.buscarTodos();
     }
 
-    @GetMapping("/buscar/{id}")
+    @GetMapping("/buscar/id/{id}")
     public Pagamento buscarPorId(@PathVariable("id") Long id){
         return serv.buscarPorId(id);
     }
 
-    @GetMapping("/buscar/{dataHora}")
+    @GetMapping("/buscar/data-hora{dataHora}")
     public List<Pagamento> buscarPorDataHora(@PathVariable("dataHora") LocalDateTime dataHora){
         return serv.buscarPorDataHora(dataHora);
     }
 
-    @GetMapping("/buscar/{status}")
+    @GetMapping("/buscar/status/{status}")
     public List<Pagamento> buscarPorStatus(@PathVariable("status") String status){
         return serv.buscarPorStatus(status);
     }

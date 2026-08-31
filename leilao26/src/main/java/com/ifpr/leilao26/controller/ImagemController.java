@@ -60,7 +60,7 @@ public class ImagemController {
         return serv.buscarTodos().stream().map(ImagemResponseDTO::from).toList();
     }
 
-    @GetMapping("/buscar/{id}")
+    @GetMapping("/buscar/id/{id}")
     public ImagemResponseDTO buscarPorId(@PathVariable("id") Long id){
         return ImagemResponseDTO.from(serv.buscarPorId(id));
     }
