@@ -29,6 +29,9 @@ import com.ifpr.leilao26.repository.PessoaRepository;
 import com.ifpr.leilao26.service.JwtService;
 import com.ifpr.leilao26.service.PessoaService;
 
+import com.ifpr.leilao26.dto.AlterarSenhaRequest;
+import com.ifpr.leilao26.dto.RecuperarSenhaRequest;
+
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin
@@ -118,5 +121,28 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(new AuthResponse(token, pessoaSalva.getId(), pessoaSalva.getUsername(),
                 List.of(perfil.getTipo().name())));
+                
+    }
+
+    @PostMapping("/recuperar-senha")
+    public ResponseEntity<Map<String, String>> recuperarSenha(@RequestBody RecuperarSenhaRequest request) {
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Informe o e-mail."));
+        }
+
+        pessoaService.gerarCodigoRecuperacao(request.getEmail());
+
+        return ResponseEntity.ok(Map.of("message",
+            "Se o e-mail informado estiver cadastrado, um código de recuperação foi enviado."));
+    }
+
+    @PostMapping("/alterar-senha")
+    public ResponseEntity<Map<String, String>> alterarSenha(@RequestBody AlterarSenhaRequest request) {
+        try {
+            pessoaService.alterarSenhaComCodigo(request.getEmail(), request.getCodigo(), request.getNovaSenha());
+            return ResponseEntity.ok(Map.of("message", "Senha alterada com sucesso."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 }

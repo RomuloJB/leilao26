@@ -1,6 +1,6 @@
 package com.ifpr.leilao26.model;
 
-import java.sql.Date;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,8 +36,8 @@ public class Pessoa implements UserDetails {
 
     private String codigoValidacao;
 
-    private Date validadeCodigoValidacao;
-
+    private LocalDateTime validadeCodigoValidacao;
+    
     private Boolean ativo = true;
     @Lob
     private byte[] fotoPerfil;
