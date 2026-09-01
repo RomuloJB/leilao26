@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ifpr.leilao26.model.Categoria;
+import com.ifpr.leilao26.model.Pessoa;
 import com.ifpr.leilao26.service.CategoriaService;
 
 @RestController
@@ -25,13 +27,16 @@ public class CategoriaController {
     @Autowired private CategoriaService serv;
 
     @PostMapping("/registrar")
-    public ResponseEntity<Categoria> criarCategoria(@RequestBody() Categoria categoria){
-        Categoria criarCategoria = serv.criarCategoria(categoria);
-        return ResponseEntity.status(HttpStatus.CREATED).body(criarCategoria);
+    public ResponseEntity<Categoria> criarCategoria(@RequestBody Categoria categoria,
+                                                    @AuthenticationPrincipal Pessoa pessoaLogada){
+        categoria.setCriado_por(pessoaLogada);
+        Categoria criada = serv.criarCategoria(categoria);
+        return ResponseEntity.status(HttpStatus.CREATED).body(criada);
     }
 
     @PutMapping("/atualizar/{id}")
     public Categoria atualizarCategoria(@RequestBody() Categoria categoria, @PathVariable("id") Long id) {
+        categoria.setId(id);
         return serv.atualizarCategoria(categoria);
     }
 

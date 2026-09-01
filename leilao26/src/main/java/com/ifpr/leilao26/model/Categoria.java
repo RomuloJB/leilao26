@@ -21,6 +21,8 @@ public class Categoria {
     @NotBlank
     private String nome;
     private String observacao;
+    private String icone;
+
 
     @ManyToOne
     private Pessoa criador;

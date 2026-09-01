@@ -55,9 +55,9 @@ public class DataSeeder implements CommandLineRunner {
         Perfil perfilAdmin = garantirPerfil(TipoPerfil.ADMIN);
         garantirPerfil(TipoPerfil.COMPRADOR);
         garantirPerfil(TipoPerfil.VENDEDOR);
-        garantirCategoria("Gado");
-        garantirCategoria("Cavalos");
-        garantirCategoria("Ovelhas");
+        garantirCategoria("Gado", "🐄", "Leilões de bovinos de corte e de leite direto da fazenda.");
+        garantirCategoria("Cavalos", "🐎", "Leilões de cavalos de trabalho e esporte.");
+        garantirCategoria("Ovelhas", "🐑", "Leilões de ovinos de corte e de lã.");
 
         if (pessoaRepository.findByUsername(adminUsername) == null) {
             Pessoa admin = new Pessoa();
@@ -85,14 +85,14 @@ public class DataSeeder implements CommandLineRunner {
         });
     }
 
-    private Categoria garantirCategoria(String nome) {
+    private Categoria garantirCategoria(String nome, String icone, String observacao) {
         Categoria existente = categoriaRepository.findByNome(nome);
-        if (existente != null) {
-            return existente;
-        }
+        if (existente != null) return existente;
 
         Categoria nova = new Categoria();
         nova.setNome(nome);
+        nova.setIcone(icone);
+        nova.setObservacao(observacao);
         return categoriaRepository.save(nova);
-}
+    }
 }
