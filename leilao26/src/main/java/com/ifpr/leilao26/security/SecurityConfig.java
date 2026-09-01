@@ -74,6 +74,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/pessoa/registrar").permitAll()
+                .requestMatchers(HttpMethod.GET, "/leilao/buscar/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/categoria/buscar/**").permitAll() // nova linha
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()

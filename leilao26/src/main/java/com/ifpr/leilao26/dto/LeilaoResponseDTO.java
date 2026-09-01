@@ -5,6 +5,9 @@ import java.util.List;
 import com.ifpr.leilao26.enums.StatusLeilao;
 import com.ifpr.leilao26.model.Leilao;
 
+import lombok.Data;
+
+@Data
 public class LeilaoResponseDTO {
     private Long id;
     private String titulo;
