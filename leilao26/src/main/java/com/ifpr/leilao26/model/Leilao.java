@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ifpr.leilao26.enums.StatusLeilao;
 
 import jakarta.persistence.Entity;
@@ -53,7 +54,7 @@ public class Leilao {
     @ManyToOne
     private Pessoa vendedor;
 
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @ManyToOne
     private Categoria categoria;
 

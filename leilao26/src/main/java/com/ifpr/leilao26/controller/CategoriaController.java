@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ifpr.leilao26.dto.CategoriaResponseDTO;
 import com.ifpr.leilao26.model.Categoria;
 import com.ifpr.leilao26.model.Pessoa;
 import com.ifpr.leilao26.service.CategoriaService;
@@ -25,34 +26,33 @@ import com.ifpr.leilao26.service.CategoriaService;
 @RequestMapping("/categoria")
 public class CategoriaController {
     @Autowired private CategoriaService serv;
-
     @PostMapping("/registrar")
-    public ResponseEntity<Categoria> criarCategoria(@RequestBody Categoria categoria,
+    public ResponseEntity<CategoriaResponseDTO> criarCategoria(@RequestBody Categoria categoria,
                                                     @AuthenticationPrincipal Pessoa pessoaLogada){
         categoria.setCriado_por(pessoaLogada);
         Categoria criada = serv.criarCategoria(categoria);
-        return ResponseEntity.status(HttpStatus.CREATED).body(criada);
+        return ResponseEntity.status(HttpStatus.CREATED).body(CategoriaResponseDTO.from(criada));
     }
 
     @PutMapping("/atualizar/{id}")
-    public Categoria atualizarCategoria(@RequestBody() Categoria categoria, @PathVariable("id") Long id) {
+    public CategoriaResponseDTO atualizarCategoria(@RequestBody() Categoria categoria, @PathVariable("id") Long id) {
         categoria.setId(id);
-        return serv.atualizarCategoria(categoria);
+        return CategoriaResponseDTO.from(serv.atualizarCategoria(categoria));
     }
 
     @GetMapping("/buscar")
-    public List<Categoria> buscarTodos(){
-        return serv.buscarTodos();
+    public List<CategoriaResponseDTO> buscarTodos(){
+        return serv.buscarTodos().stream().map(CategoriaResponseDTO::from).toList();
     }
 
     @GetMapping("/buscar/id/{id}")
-    public Categoria buscarPorId(@PathVariable() Long id){
-        return serv.buscarPorId(id);
+    public CategoriaResponseDTO buscarPorId(@PathVariable() Long id){
+        return CategoriaResponseDTO.from(serv.buscarPorId(id));
     }
 
     @GetMapping("/buscar/nome/{nome}")
-    public Categoria buscarPorNome(@PathVariable() String nome){
-        return serv.buscarPorNome(nome);
+    public CategoriaResponseDTO buscarPorNome(@PathVariable() String nome){
+        return CategoriaResponseDTO.from(serv.buscarPorNome(nome));
     }
 
     @DeleteMapping("/excluir/{id}")

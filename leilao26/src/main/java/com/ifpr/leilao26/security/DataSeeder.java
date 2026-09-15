@@ -87,8 +87,11 @@ public class DataSeeder implements CommandLineRunner {
 
     private Categoria garantirCategoria(String nome, String icone, String observacao) {
         Categoria existente = categoriaRepository.findByNome(nome);
-        if (existente != null) return existente;
-
+        if (existente != null) {
+            existente.setIcone(icone);
+            existente.setObservacao(observacao);
+            return categoriaRepository.save(existente);
+        }
         Categoria nova = new Categoria();
         nova.setNome(nome);
         nova.setIcone(icone);
