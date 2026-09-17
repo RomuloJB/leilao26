@@ -59,11 +59,12 @@ public class Leilao {
     @ManyToOne
     private Categoria categoria;
 
+    // cascade REMOVE: ao excluir o leilão, as imagens e os lances dele vão junto
+    // (senão a FK imagem.leilao_id / lance.leilao_id barra a exclusão com erro 500).
     @JsonIgnore
-    @OneToMany(mappedBy = "leilao")
+    @OneToMany(mappedBy = "leilao", cascade = CascadeType.REMOVE)
     private List<Imagem> imagens;
 
-    // cascade REMOVE: ao excluir o leilão, os lances dele vão junto (senão a FK barra a exclusão).
     @JsonIgnore
     @OneToMany(mappedBy = "leilao", cascade = CascadeType.REMOVE)
     private List<Lance> lances;

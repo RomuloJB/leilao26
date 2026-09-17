@@ -71,7 +71,23 @@ public class LeilaoService {
         return repo.findByLanceMinimo(lanceMinimo);
     }
 
+    // Regra: só leilão ENCERRADO ou CANCELADO pode ser excluído — vale pro ADMIN também.
+    // Quem (ADMIN / vendedor dono) pode chamar é checado no LeilaoController.verificarPermissao.
     public void excluirLeilao(Long id){
-        repo.deleteById(id);
+        Leilao leilao = repo.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Leilão não encontrado."));
+
+        if (!podeSerExcluido(leilao)) {
+            throw new IllegalArgumentException(
+                "Só é possível excluir leilões com status ENCERRADO ou CANCELADO. "
+                + "Cancele ou encerre o leilão antes de excluí-lo.");
+        }
+
+        repo.delete(leilao);
+    }
+
+    public static boolean podeSerExcluido(Leilao leilao) {
+        StatusLeilao status = leilao.getStatus();
+        return status == StatusLeilao.ENCERRADO || status == StatusLeilao.CANCELADO;
     }
 }

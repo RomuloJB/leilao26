@@ -2,6 +2,7 @@ package com.ifpr.leilao26.controller;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -100,15 +101,21 @@ public class LeilaoController {
 
 
     @DeleteMapping("/excluir/{id}")
-    public ResponseEntity<Void> excluirLeilao(@PathVariable Long id,
-                                               @AuthenticationPrincipal Pessoa pessoaLogada) {
+    public ResponseEntity<?> excluirLeilao(@PathVariable Long id,
+                                           @AuthenticationPrincipal Pessoa pessoaLogada) {
         Leilao existente = serv.buscarPorId(id);
         if (existente == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Leilão não encontrado.");
         }
         verificarPermissao(existente, pessoaLogada);
 
-        serv.excluirLeilao(id);
+        try {
+            serv.excluirLeilao(id);
+        } catch (IllegalArgumentException e) {
+            // Regra de status (só ENCERRADO/CANCELADO). Mesmo formato do LanceController,
+            // pro front exibir e.response.data.message.
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
         return ResponseEntity.noContent().build();
     }
 
