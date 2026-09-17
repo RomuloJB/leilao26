@@ -75,6 +75,14 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/pessoa/registrar").permitAll()
                 .requestMatchers(HttpMethod.GET, "/leilao/buscar/**").permitAll()
+                // Criar/editar/excluir leilão: só VENDEDOR ou ADMIN.
+                // A checagem de "é o dono do leilão" fica no LeilaoController.verificarPermissao.
+                .requestMatchers(HttpMethod.POST, "/leilao/registrar").hasAnyRole("VENDEDOR", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/leilao/atualizar/**").hasAnyRole("VENDEDOR", "ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/leilao/excluir/**").hasAnyRole("VENDEDOR", "ADMIN")
+                // Lances: só COMPRADOR dá lance; consulta é pra qualquer logado; excluir só ADMIN.
+                .requestMatchers(HttpMethod.POST, "/lance/registrar").hasRole("COMPRADOR")
+                .requestMatchers(HttpMethod.DELETE, "/lance/excluir/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/categoria/buscar/**").permitAll() // nova linha
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()

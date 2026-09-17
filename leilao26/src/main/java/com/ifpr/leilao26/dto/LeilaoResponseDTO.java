@@ -2,7 +2,9 @@ package com.ifpr.leilao26.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import com.ifpr.leilao26.enums.StatusLeilao;
+import com.ifpr.leilao26.model.Lance;
 import com.ifpr.leilao26.model.Leilao;
 
 import lombok.Data;
@@ -24,6 +26,9 @@ public class LeilaoResponseDTO {
     private Long vendedorId;
     private String vendedorUsername;
     private List<ImagemResponseDTO> imagens;
+    // null enquanto o leilão não tiver nenhum lance
+    private Float maiorLance;
+    private int totalLances;
 
     public static LeilaoResponseDTO from(Leilao leilao) {
         LeilaoResponseDTO dto = new LeilaoResponseDTO();
@@ -49,6 +54,14 @@ public class LeilaoResponseDTO {
         if (leilao.getImagens() != null) {
             dto.imagens = leilao.getImagens().stream().map(ImagemResponseDTO::from).toList();
         }
+        if (leilao.getLances() != null) {
+            dto.totalLances = leilao.getLances().size();
+            dto.maiorLance = leilao.getLances().stream()
+                .map(Lance::getValorLance)
+                .filter(Objects::nonNull)
+                .max(Float::compare)
+                .orElse(null);
+        }
         return dto;
     }
 
@@ -67,4 +80,6 @@ public class LeilaoResponseDTO {
     public Long getVendedorId() { return vendedorId; }
     public String getVendedorUsername() { return vendedorUsername; }
     public List<ImagemResponseDTO> getImagens() { return imagens; }
+    public Float getMaiorLance() { return maiorLance; }
+    public int getTotalLances() { return totalLances; }
 }

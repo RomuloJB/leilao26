@@ -1,22 +1,26 @@
 package com.ifpr.leilao26.controller;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.ifpr.leilao26.dto.LanceRequestDTO;
+import com.ifpr.leilao26.dto.LanceResponseDTO;
 import com.ifpr.leilao26.model.Lance;
+import com.ifpr.leilao26.model.Pessoa;
 import com.ifpr.leilao26.service.LanceService;
 
 @RestController
@@ -25,39 +29,46 @@ import com.ifpr.leilao26.service.LanceService;
 public class LanceController {
     @Autowired private LanceService serv;
 
+    // Quem pode chamar (só COMPRADOR) é definido no SecurityConfig.
+    // As regras de valor mínimo/incremento/status ficam no LanceService.
     @PostMapping("/registrar")
-    public ResponseEntity<Lance> criarLance(@RequestBody() Lance lance) {
-        Lance criarLance = serv.criarLance(lance);
-        return ResponseEntity.status(HttpStatus.CREATED).body(criarLance);
+    public ResponseEntity<?> registrarLance(@RequestBody LanceRequestDTO request,
+                                            @AuthenticationPrincipal Pessoa pessoaLogada) {
+        try {
+            Lance criado = serv.registrarLance(request.getLeilaoId(), request.getValorLance(), pessoaLogada);
+            return ResponseEntity.status(HttpStatus.CREATED).body(LanceResponseDTO.from(criado));
+        } catch (IllegalArgumentException e) {
+            // Mesmo formato de erro do AuthController, pro front exibir e.response.data.message.
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
-    @PutMapping("/atualizar/{id}")
-    public Lance atualizarLance(@RequestBody() Lance lance, @PathVariable("id") Long id){
-        return serv.atualizarLance(lance);
+    @GetMapping("/buscar/leilao/{leilaoId}")
+    public List<LanceResponseDTO> buscarPorLeilao(@PathVariable Long leilaoId) {
+        return serv.buscarPorLeilao(leilaoId).stream().map(LanceResponseDTO::from).toList();
     }
 
     @GetMapping("/buscar")
-    public List<Lance> buscarTodos(){
-        return serv.buscarTodos();
+    public List<LanceResponseDTO> buscarTodos(){
+        return serv.buscarTodos().stream().map(LanceResponseDTO::from).toList();
     }
 
     @GetMapping("/buscar/id/{id}")
-    public Lance buscarPorId(@PathVariable("id") Long id){
-        return serv.buscarPorId(id);
+    public LanceResponseDTO buscarPorId(@PathVariable Long id){
+        Lance lance = serv.buscarPorId(id);
+        if (lance == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Lance não encontrado.");
+        }
+        return LanceResponseDTO.from(lance);
     }
 
-    @GetMapping("/buscar/valor-lance/{valorLance}")
-    public Lance buscarPorValorLance(@PathVariable("valorLance") Float valorLance){
-        return serv.buscarPorValorLance(valorLance);
-    }
-
-    @GetMapping("/buscar/data-hora/{dataHora}")
-    public Lance buscarPorDataHora(@PathVariable("dataHora") LocalDateTime dataHora){
-        return serv.buscarPorDataHora(dataHora);
-    }
-
-    @DeleteMapping("excluir/{id}")
-    public void excluirLance(@PathVariable("id") Long id){
+    // Lance não se edita: uma vez dado, vale. Só ADMIN exclui (restrito no SecurityConfig).
+    @DeleteMapping("/excluir/{id}")
+    public ResponseEntity<Void> excluirLance(@PathVariable Long id){
+        if (serv.buscarPorId(id) == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Lance não encontrado.");
+        }
         serv.excluirLance(id);
+        return ResponseEntity.noContent().build();
     }
 }

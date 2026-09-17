@@ -20,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.ifpr.leilao26.dto.LeilaoResponseDTO;
 import com.ifpr.leilao26.enums.StatusLeilao;
+import com.ifpr.leilao26.enums.TipoPerfil;
 import com.ifpr.leilao26.model.Leilao;
 import com.ifpr.leilao26.model.Pessoa;
 import com.ifpr.leilao26.service.LeilaoService;
@@ -111,15 +112,23 @@ public class LeilaoController {
         return ResponseEntity.noContent().build();
     }
 
+    // Regra: ADMIN pode alterar qualquer leilão; VENDEDOR só os que ele mesmo criou.
+    // O SecurityConfig já barra COMPRADOR antes de chegar aqui, mas a checagem de perfil
+    // fica também aqui pra regra ser completa mesmo se a config de rotas mudar.
     private void verificarPermissao(Leilao leilao, Pessoa pessoaLogada) {
+        boolean isAdmin = temPerfil(pessoaLogada, TipoPerfil.ADMIN);
+        boolean isVendedor = temPerfil(pessoaLogada, TipoPerfil.VENDEDOR);
         boolean isDono = leilao.getVendedor() != null
             && leilao.getVendedor().getId().equals(pessoaLogada.getId());
-        boolean isAdmin = pessoaLogada.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        if (!isDono && !isAdmin) {
+        if (!isAdmin && !(isVendedor && isDono)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                 "Você não tem permissão para alterar este leilão.");
         }
+    }
+
+    private boolean temPerfil(Pessoa pessoa, TipoPerfil tipo) {
+        return pessoa.getAuthorities().stream()
+            .anyMatch(a -> a.getAuthority().equals("ROLE_" + tipo.name()));
     }
 }

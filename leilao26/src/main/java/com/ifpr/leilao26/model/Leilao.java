@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ifpr.leilao26.enums.StatusLeilao;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -62,8 +63,9 @@ public class Leilao {
     @OneToMany(mappedBy = "leilao")
     private List<Imagem> imagens;
 
+    // cascade REMOVE: ao excluir o leilão, os lances dele vão junto (senão a FK barra a exclusão).
     @JsonIgnore
-    @OneToMany(mappedBy = "leilao")
+    @OneToMany(mappedBy = "leilao", cascade = CascadeType.REMOVE)
     private List<Lance> lances;
 
     @JsonIgnore
