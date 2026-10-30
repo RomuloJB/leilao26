@@ -1,10 +1,12 @@
 package com.ifpr.leilao26.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ifpr.leilao26.dto.TrocarSenhaRequest;
 import com.ifpr.leilao26.model.Pessoa;
 import com.ifpr.leilao26.service.PessoaService;
 
@@ -51,5 +54,15 @@ public class PessoaController {
         return ResponseEntity.noContent().build();
     }
 
-    
+    // Troca a senha do próprio usuário logado (o id vem do token, não do corpo da requisição)
+    @PutMapping("/trocar-senha")
+    public ResponseEntity<Map<String, String>> trocarSenha(@RequestBody TrocarSenhaRequest request,
+                                                           @AuthenticationPrincipal Pessoa pessoaLogada) {
+        try {
+            serv.trocarSenha(pessoaLogada.getId(), request.getSenhaAtual(), request.getNovaSenha());
+            return ResponseEntity.ok(Map.of("message", "Senha alterada com sucesso."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
 }

@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.MailException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -32,6 +33,9 @@ import com.ifpr.leilao26.service.PessoaService;
 import com.ifpr.leilao26.dto.AlterarSenhaRequest;
 import com.ifpr.leilao26.dto.RecuperarSenhaRequest;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin
@@ -130,7 +134,14 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("message", "Informe o e-mail."));
         }
 
-        pessoaService.gerarCodigoRecuperacao(request.getEmail());
+        try {
+            pessoaService.gerarCodigoRecuperacao(request.getEmail());
+        } catch (MailException e) {
+            // falha no SMTP (credenciais, rede...): registra no log e avisa o usuário sem expor detalhes
+            log.error("Falha ao enviar e-mail de recuperação de senha", e);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("message",
+                "Não foi possível enviar o e-mail agora. Tente novamente mais tarde."));
+        }
 
         return ResponseEntity.ok(Map.of("message",
             "Se o e-mail informado estiver cadastrado, um código de recuperação foi enviado."));
