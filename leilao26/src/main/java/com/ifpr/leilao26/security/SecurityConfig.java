@@ -80,8 +80,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/leilao/registrar").hasAnyRole("VENDEDOR", "ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/leilao/atualizar/**").hasAnyRole("VENDEDOR", "ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/leilao/excluir/**").hasAnyRole("VENDEDOR", "ADMIN")
-                // Lances: só COMPRADOR dá lance; consulta é pra qualquer logado; excluir só ADMIN.
+                // Lances: só COMPRADOR dá lance; histórico de um leilão é público (aparece na tela de detalhes);
+                // demais consultas pra qualquer logado; excluir só ADMIN.
                 .requestMatchers(HttpMethod.POST, "/lance/registrar").hasRole("COMPRADOR")
+                .requestMatchers(HttpMethod.GET, "/lance/buscar/leilao/**").permitAll()
                 .requestMatchers(HttpMethod.DELETE, "/lance/excluir/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/categoria/buscar/**").permitAll() // nova linha
                 .requestMatchers("/admin/**").hasRole("ADMIN")
