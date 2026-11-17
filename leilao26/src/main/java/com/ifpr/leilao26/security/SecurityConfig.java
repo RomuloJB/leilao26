@@ -72,17 +72,21 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // /auth/me precisa vir antes do /auth/** (a primeira regra que casa é a que vale)
+                .requestMatchers(HttpMethod.GET, "/auth/me").authenticated()
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/pessoa/registrar").permitAll()
                 .requestMatchers(HttpMethod.GET, "/leilao/buscar/**").permitAll()
-                // Criar/editar/excluir leilão: só VENDEDOR ou ADMIN.
-                // A checagem de "é o dono do leilão" fica no LeilaoController.verificarPermissao.
-                .requestMatchers(HttpMethod.POST, "/leilao/registrar").hasAnyRole("VENDEDOR", "ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/leilao/atualizar/**").hasAnyRole("VENDEDOR", "ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/leilao/excluir/**").hasAnyRole("VENDEDOR", "ADMIN")
-                // Lances: só COMPRADOR dá lance; histórico de um leilão é público (aparece na tela de detalhes);
+                // COMPRADOR e VENDEDOR têm os mesmos direitos: os dois criam leilão e dão lance.
+                // Criar leilão é o que faz o COMPRADOR virar VENDEDOR (LeilaoService.criarLeilao).
+                // Editar/excluir: só o dono do leilão ou ADMIN (LeilaoController.verificarPermissao).
+                .requestMatchers(HttpMethod.POST, "/leilao/registrar").hasAnyRole("COMPRADOR", "VENDEDOR", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/leilao/atualizar/**").hasAnyRole("COMPRADOR", "VENDEDOR", "ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/leilao/excluir/**").hasAnyRole("COMPRADOR", "VENDEDOR", "ADMIN")
+                // Lances: COMPRADOR ou VENDEDOR (ninguém dá lance no próprio leilão, regra no LanceService);
+                // histórico de um leilão é público (aparece na tela de detalhes);
                 // demais consultas pra qualquer logado; excluir só ADMIN.
-                .requestMatchers(HttpMethod.POST, "/lance/registrar").hasRole("COMPRADOR")
+                .requestMatchers(HttpMethod.POST, "/lance/registrar").hasAnyRole("COMPRADOR", "VENDEDOR")
                 .requestMatchers(HttpMethod.GET, "/lance/buscar/leilao/**").permitAll()
                 .requestMatchers(HttpMethod.DELETE, "/lance/excluir/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/categoria/buscar/**").permitAll() // nova linha

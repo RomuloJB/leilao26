@@ -29,7 +29,7 @@ import com.ifpr.leilao26.service.LanceService;
 public class LanceController {
     @Autowired private LanceService serv;
 
-    // Quem pode chamar (só COMPRADOR) é definido no SecurityConfig.
+    // Quem pode chamar (COMPRADOR ou VENDEDOR) é definido no SecurityConfig.
     // As regras de valor mínimo/incremento/status ficam no LanceService.
     @PostMapping("/registrar")
     public ResponseEntity<?> registrarLance(@RequestBody LanceRequestDTO request,

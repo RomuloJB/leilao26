@@ -10,8 +10,10 @@ import org.springframework.mail.MailException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -78,8 +80,23 @@ public class AuthController {
         return ResponseEntity.ok(new AuthResponse(token, pessoa.getId(), pessoa.getUsername(), roles));
     }
 
-    // Cadastro público: cria a Pessoa e já vincula o Perfil escolhido (COMPRADOR
-    // ou VENDEDOR)
+    // Devolve os dados e perfis atuais de quem está logado.
+    // O front chama depois de criar um leilão, porque o perfil pode ter mudado
+    // de COMPRADOR para VENDEDOR (ver PessoaPerfilService.tornarVendedor).
+    @GetMapping("/me")
+    public ResponseEntity<?> usuarioLogado(@AuthenticationPrincipal Pessoa pessoaLogada) {
+        List<String> roles = pessoaLogada.getAuthorities().stream()
+            .map(a -> a.getAuthority().replace("ROLE_", ""))
+            .toList();
+        return ResponseEntity.ok(Map.of(
+            "id", pessoaLogada.getId(),
+            "username", pessoaLogada.getUsername(),
+            "roles", roles));
+    }
+
+    // Cadastro público: cria a Pessoa e atribui automaticamente o perfil COMPRADOR.
+    // O usuário não escolhe o perfil: ele passa a VENDEDOR sozinho quando cria o
+    // primeiro leilão. COMPRADOR e VENDEDOR têm os mesmos direitos (comprar e vender).
     @PostMapping("/registrar")
     @Transactional
     public ResponseEntity<?> registrar(@RequestBody CadastroRequest request) {
@@ -88,11 +105,6 @@ public class AuthController {
             || request.getSenha() == null || request.getSenha().isBlank()) {
             return ResponseEntity.badRequest()
                 .body(Map.of("message", "Preencha usuário, e-mail e senha."));
-        }
-
-        if (request.getTipoPerfil() != TipoPerfil.COMPRADOR && request.getTipoPerfil() != TipoPerfil.VENDEDOR) {
-            return ResponseEntity.badRequest()
-                .body(Map.of("message", "Selecione se deseja se cadastrar como comprador ou vendedor."));
         }
 
         if (pessoaRepository.findByUsername(request.getUsername()) != null) {
@@ -105,9 +117,9 @@ public class AuthController {
                 .body(Map.of("message", "Este e-mail já está cadastrado."));
         }
 
-        Perfil perfil = perfilRepository.findByTipo(request.getTipoPerfil())
+        Perfil perfil = perfilRepository.findByTipo(TipoPerfil.COMPRADOR)
             .orElseThrow(() -> new IllegalStateException(
-                "Perfil " + request.getTipoPerfil() + " não está cadastrado no sistema."));
+                "Perfil COMPRADOR não está cadastrado no sistema."));
 
         Pessoa pessoa = new Pessoa();
         pessoa.setUsername(request.getUsername());

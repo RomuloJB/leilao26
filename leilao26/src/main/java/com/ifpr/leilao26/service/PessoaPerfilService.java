@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.ifpr.leilao26.enums.TipoPerfil;
 import com.ifpr.leilao26.model.Perfil;
 import com.ifpr.leilao26.model.Pessoa;
 import com.ifpr.leilao26.model.PessoaPerfil;
@@ -53,5 +55,31 @@ public class PessoaPerfilService {
 
     public void removerPerfil(Long id) {
         repo.deleteById(id);
+    }
+
+    // Chamado quando a pessoa cria um leilão: o perfil COMPRADOR (dado no cadastro)
+    // muda para VENDEDOR. Os dois perfis têm os mesmos direitos (comprar e vender);
+    // a troca só registra que a pessoa já anunciou algo.
+    // Quem já é VENDEDOR ou não tem COMPRADOR (ex.: ADMIN) fica como está.
+    @Transactional
+    public void tornarVendedor(Long pessoaId) {
+        List<PessoaPerfil> vinculos = repo.findByPessoaId(pessoaId);
+
+        boolean jaEhVendedor = vinculos.stream()
+            .anyMatch(v -> v.getPerfil().getTipo() == TipoPerfil.VENDEDOR);
+        if (jaEhVendedor) {
+            return;
+        }
+
+        vinculos.stream()
+            .filter(v -> v.getPerfil().getTipo() == TipoPerfil.COMPRADOR)
+            .findFirst()
+            .ifPresent(vinculoComprador -> {
+                Perfil vendedor = perfilRepo.findByTipo(TipoPerfil.VENDEDOR)
+                    .orElseThrow(() -> new IllegalStateException(
+                        "Perfil VENDEDOR não está cadastrado no sistema."));
+                vinculoComprador.setPerfil(vendedor);
+                repo.save(vinculoComprador);
+            });
     }
 }

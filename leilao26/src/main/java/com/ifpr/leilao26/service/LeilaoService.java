@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ifpr.leilao26.enums.StatusLeilao;
 import com.ifpr.leilao26.model.Leilao;
@@ -13,9 +14,17 @@ import com.ifpr.leilao26.repository.LeilaoRepository;
 @Service
 public class LeilaoService {
     @Autowired private LeilaoRepository repo;
+    @Autowired private PessoaPerfilService pessoaPerfilService;
 
+    // Ao criar um leilão, quem anunciou passa de COMPRADOR para VENDEDOR.
+    // Transacional: se a troca de perfil falhar, o leilão também não é salvo.
+    @Transactional
     public Leilao criarLeilao(Leilao leilao){
-        return repo.save(leilao);
+        Leilao criado = repo.save(leilao);
+        if (leilao.getVendedor() != null) {
+            pessoaPerfilService.tornarVendedor(leilao.getVendedor().getId());
+        }
+        return criado;
     }
 
     public Leilao atualizarLeilao(Leilao leilaoAtualizado) {

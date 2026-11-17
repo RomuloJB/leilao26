@@ -119,16 +119,14 @@ public class LeilaoController {
         return ResponseEntity.noContent().build();
     }
 
-    // Regra: ADMIN pode alterar qualquer leilão; VENDEDOR só os que ele mesmo criou.
-    // O SecurityConfig já barra COMPRADOR antes de chegar aqui, mas a checagem de perfil
-    // fica também aqui pra regra ser completa mesmo se a config de rotas mudar.
+    // Regra: ADMIN pode alterar qualquer leilão; os demais só os que eles mesmos criaram.
+    // Não depende de ser COMPRADOR ou VENDEDOR: os dois perfis têm os mesmos direitos.
     private void verificarPermissao(Leilao leilao, Pessoa pessoaLogada) {
         boolean isAdmin = temPerfil(pessoaLogada, TipoPerfil.ADMIN);
-        boolean isVendedor = temPerfil(pessoaLogada, TipoPerfil.VENDEDOR);
         boolean isDono = leilao.getVendedor() != null
             && leilao.getVendedor().getId().equals(pessoaLogada.getId());
 
-        if (!isAdmin && !(isVendedor && isDono)) {
+        if (!isAdmin && !isDono) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                 "Você não tem permissão para alterar este leilão.");
         }
