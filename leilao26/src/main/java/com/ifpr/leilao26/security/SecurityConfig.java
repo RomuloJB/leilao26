@@ -9,11 +9,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -45,7 +43,7 @@ public class SecurityConfig {
         return provider;
     }
 
-        @Bean
+    @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
@@ -77,19 +75,15 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/pessoa/registrar").permitAll()
                 .requestMatchers(HttpMethod.GET, "/leilao/buscar/**").permitAll()
-                // COMPRADOR e VENDEDOR têm os mesmos direitos: os dois criam leilão e dão lance.
-                // Criar leilão é o que faz o COMPRADOR virar VENDEDOR (LeilaoService.criarLeilao).
-                // Editar/excluir: só o dono do leilão ou ADMIN (LeilaoController.verificarPermissao).
+                //
                 .requestMatchers(HttpMethod.POST, "/leilao/registrar").hasAnyRole("COMPRADOR", "VENDEDOR", "ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/leilao/atualizar/**").hasAnyRole("COMPRADOR", "VENDEDOR", "ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/leilao/excluir/**").hasAnyRole("COMPRADOR", "VENDEDOR", "ADMIN")
-                // Lances: COMPRADOR ou VENDEDOR (ninguém dá lance no próprio leilão, regra no LanceService);
-                // histórico de um leilão é público (aparece na tela de detalhes);
-                // demais consultas pra qualquer logado; excluir só ADMIN.
+                //
                 .requestMatchers(HttpMethod.POST, "/lance/registrar").hasAnyRole("COMPRADOR", "VENDEDOR")
                 .requestMatchers(HttpMethod.GET, "/lance/buscar/leilao/**").permitAll()
                 .requestMatchers(HttpMethod.DELETE, "/lance/excluir/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/categoria/buscar/**").permitAll() // nova linha
+                .requestMatchers(HttpMethod.GET, "/categoria/buscar/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/imagem/arquivo/**").permitAll()

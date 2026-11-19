@@ -1,17 +1,20 @@
 package com.ifpr.leilao26.controller;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.MailException;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ifpr.leilao26.dto.AuthResponse;
+import com.ifpr.leilao26.dto.AuthResultado;
 import com.ifpr.leilao26.dto.CadastroRequest;
 import com.ifpr.leilao26.dto.LoginRequest;
 import com.ifpr.leilao26.enums.TipoPerfil;
@@ -29,12 +33,13 @@ import com.ifpr.leilao26.model.PessoaPerfil;
 import com.ifpr.leilao26.repository.PerfilRepository;
 import com.ifpr.leilao26.repository.PessoaPerfilRepository;
 import com.ifpr.leilao26.repository.PessoaRepository;
-import com.ifpr.leilao26.service.JwtService;
+import com.ifpr.leilao26.service.AuthService;
 import com.ifpr.leilao26.service.PessoaService;
 
 import com.ifpr.leilao26.dto.AlterarSenhaRequest;
 import com.ifpr.leilao26.dto.RecuperarSenhaRequest;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -43,11 +48,13 @@ import lombok.extern.slf4j.Slf4j;
 @CrossOrigin
 public class AuthController {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    private static final String COOKIE_REFRESH_TOKEN = "refreshToken";
 
     @Autowired
-    private JwtService jwtService;
+    private AuthService authService;
+
+    @Value("${jwt.refresh.expiration}")
+    private long refreshExpiration;
 
     @Autowired
     private PessoaRepository pessoaRepository;
@@ -62,22 +69,49 @@ public class AuthController {
     private PessoaPerfilRepository pessoaPerfilRepository;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletResponse response) {
+        AuthResultado resultado;
         try {
-            authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getSenha())
-            );
+            resultado = authService.autenticar(request);
         } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("message", "Usuário ou senha inválidos."));
         }
 
-        Pessoa pessoa = pessoaRepository.findByUsernameComPerfis(request.getUsername()).orElse(null);
-        String token = jwtService.gerarToken(pessoa);
-        List<String> roles = pessoa.getAuthorities().stream()
-            .map(a -> a.getAuthority().replace("ROLE_", ""))
-            .toList();
-        return ResponseEntity.ok(new AuthResponse(token, pessoa.getId(), pessoa.getUsername(), roles));
+        adicionarCookieRefreshToken(response, resultado.refreshToken());
+        return ResponseEntity.ok(resultado.dados());
+    }
+
+    // O navegador envia o cookie refreshToken sozinho (o path dele é /auth).
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refresh(
+            @CookieValue(name = COOKIE_REFRESH_TOKEN, required = false) String refreshToken,
+            HttpServletResponse response) {
+        if (refreshToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        try {
+            AuthResultado resultado = authService.renovar(refreshToken);
+            adicionarCookieRefreshToken(response, resultado.refreshToken());
+            return ResponseEntity.ok(resultado.dados());
+        } catch (RuntimeException e) {
+            removerCookieRefreshToken(response);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    // Revoga o refresh token no banco e apaga o cookie.
+    // O access token continua válido até expirar (JWT não pode ser cancelado),
+    // por isso o front também precisa descartá-lo.
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @CookieValue(name = COOKIE_REFRESH_TOKEN, required = false) String refreshToken,
+            HttpServletResponse response) {
+        if (refreshToken != null) {
+            authService.logout(refreshToken);
+        }
+        removerCookieRefreshToken(response);
+        return ResponseEntity.noContent().build();
     }
 
     // Devolve os dados e perfis atuais de quem está logado.
@@ -99,7 +133,7 @@ public class AuthController {
     // primeiro leilão. COMPRADOR e VENDEDOR têm os mesmos direitos (comprar e vender).
     @PostMapping("/registrar")
     @Transactional
-    public ResponseEntity<?> registrar(@RequestBody CadastroRequest request) {
+    public ResponseEntity<?> registrar(@RequestBody CadastroRequest request, HttpServletResponse response) {
         if (request.getUsername() == null || request.getUsername().isBlank()
             || request.getEmail() == null || request.getEmail().isBlank()
             || request.getSenha() == null || request.getSenha().isBlank()) {
@@ -132,12 +166,13 @@ public class AuthController {
         vinculo.setPessoa(pessoaSalva);
         vinculo.setPerfil(perfil);
         pessoaPerfilRepository.save(vinculo);
+        // a pessoa recém-salva ainda não tem a lista de perfis carregada;
+        // preenche para o AuthService montar as roles da resposta
+        pessoaSalva.setPerfis(List.of(vinculo));
 
-        String token = jwtService.gerarToken(pessoaSalva);
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .body(new AuthResponse(token, pessoaSalva.getId(), pessoaSalva.getUsername(),
-                List.of(perfil.getTipo().name())));
-                
+        AuthResultado resultado = authService.iniciarSessao(pessoaSalva);
+        adicionarCookieRefreshToken(response, resultado.refreshToken());
+        return ResponseEntity.status(HttpStatus.CREATED).body(resultado.dados());
     }
 
     @PostMapping("/recuperar-senha")
@@ -167,5 +202,25 @@ public class AuthController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
+    }
+
+    private void adicionarCookieRefreshToken(HttpServletResponse response, String refreshToken) {
+        ResponseCookie cookie = ResponseCookie.from(COOKIE_REFRESH_TOKEN, refreshToken)
+            .httpOnly(true)   // o JavaScript da página não consegue ler o cookie
+            .secure(false)    // true em produção, com HTTPS
+            .sameSite("Lax")  // não é enviado em POST vindo de outros sites (defesa contra CSRF)
+            .path("/auth")    // só vai para URLs que começam com /auth
+            .maxAge(Duration.ofMillis(refreshExpiration))
+            .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    private void removerCookieRefreshToken(HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from(COOKIE_REFRESH_TOKEN, "")
+            .httpOnly(true).secure(false).sameSite("Lax")
+            .path("/auth")
+            .maxAge(0) // maxAge 0 = o navegador apaga o cookie
+            .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 }
